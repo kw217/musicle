@@ -1,0 +1,15 @@
+#musicle td {
+  border: 1px solid black;
+}
+
+.x0, .y0, .x0.centre, .y0.centre {
+	background-color: #ffffcc;
+}
+
+.centre {
+	background-color: #dddddd;
+}
+
+.x0.y0 {
+	background-color: #ffee77;
+}
