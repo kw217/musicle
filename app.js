@@ -25,18 +25,19 @@ app.ready = function () {
 
   // Set up table
   var table = $("#musicle");
-  var s = "";
   for (var y = app.data.y_max; y >= app.data.y_min; y--) {
-    s += "<tr>";
+    var row = $('<tr>')
+    table.append(row);
     for (var x = app.data.x_min; x <= app.data.x_max; x++) {
       var klass = ((x == 0) ? "x0" : "") + " " + ((y == 0) ? "y0" : "")
       if (x >= app.data.xf_min && x <= app.data.xf_max && y >= app.data.yf_min && y <= app.data.yf_max) {
         klass += " centre"
       }
-      s += "<td class='" + klass + "' onmousedown='app.press(" + x + "," + y + ");'>" + app.cell(x,y).label;
+      var cell = $("<td class='" + klass + "'>" + app.cell(x,y).label  + "</td>");
+      row.append(cell)
+      cell.mousedown(function() { app.press(x,y) })
     }
   }
-  table.html(s)
 
   // Set up sound
   app.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
