@@ -4,8 +4,13 @@
 var app = {};
 
 app.oscillators = [];
+app.playing = [];
 
 app.cells = [];
+
+app.hold = false;
+
+app.debug = true;
 
 app.data = {
   y_min: -12,
@@ -21,7 +26,26 @@ app.data = {
 };
 
 app.ready = function () {
+  // Set up window event handlers
   window.onmouseup = app.release;
+  window.onkeydown = function(e) {
+    if (e.which == 17) {
+      e.preventDefault();
+      app.hold = true;
+      if (app.debug) {
+        console.log("hold on")
+      }
+    }
+  }
+  window.onkeyup = function(e) {
+    if (e.which == 17) {
+      e.preventDefault();
+      app.hold = false;
+      if (app.debug) {
+        console.log("hold off")
+      }
+    }
+  }
 
   // Set up table
   var table = $("#musicle");
@@ -33,9 +57,14 @@ app.ready = function () {
       if (x >= app.data.xf_min && x <= app.data.xf_max && y >= app.data.yf_min && y <= app.data.yf_max) {
         klass += " centre"
       }
-      var cell = $("<td class='" + klass + "'>" + app.cell(x,y).label  + "</td>");
-      row.append(cell)
-      cell.mousedown(function() { app.press(x,y) })
+      var cell = app.cell(x,y)
+      cell.elt = $("<td class='" + klass + "'>" + cell.label  + "</td>");
+      row.append(cell.elt)
+      cell.elt.mousedown(function(x,y) { return function() { app.press(x,y) } }(x,y))  // I hate JS
+      if (!(x in app.cells)) {
+        app.cells[x] = []
+      }
+      app.cells[x][y] = cell
     }
   }
 
@@ -67,16 +96,26 @@ app.cell = function(x,y) {
 }
 
 app.press = function(x,y) {
-  var cell = app.cell(x,y)
+  var cell = app.cells[x][y]
   var f = cell.f0;
   app.playNote(app.data.tune * Math.pow(2.0, -9/12) * f, 500)
+  cell.elt.addClass('playing')
+  app.playing.push(cell)
+  if (app.debug) {
+    console.log(x, y)
+  }
 }
 
 app.release = function(x,y) {
-  var oscillators = app.oscillators;
-  app.oscillators = []
-  for (var o in oscillators) {
-    oscillators[o].stop()
+  if (!app.hold) {
+    for (var o in app.oscillators) {
+      app.oscillators[o].stop()
+    }
+    app.oscillators = []
+    for (var p in app.playing) {
+      app.playing[p].elt.removeClass('playing')
+    }
+    app.playing = []
   }
 }
 
