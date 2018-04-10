@@ -5,9 +5,7 @@ var app = {};
 
 app.oscillators = [];
 app.playing = [];
-
 app.cells = [];
-
 app.hold = false;
 
 app.debug = true;
@@ -22,6 +20,9 @@ app.data = {
   xf_min: -12,
   xf_max: 12,
   tune: 440,
+  osc_type: 'triangle',
+  shepard: true,
+  master_volume: 0.5,
   names: ["C", "C&#x266F;", "D", "D&#x266F;", "E", "F", "F&#x266F;", "G", "G&#x266F;", "A", "A&#x266F;", "B",],
 };
 
@@ -46,6 +47,14 @@ app.ready = function () {
       }
     }
   }
+
+  // Set up other event handlers
+  var osc_type = $("#osc_type");
+  osc_type.val(app.data.osc_type);
+  osc_type.change(function() { app.data.osc_type = osc_type.val() });
+  var shepard = $("#shepard");
+  shepard.prop('checked', app.data.shepard);
+  shepard.change(function() { app.data.shepard = shepard.prop('checked') });
 
   // Set up table
   var table = $("#musicle");
@@ -91,6 +100,7 @@ app.cell = function(x,y) {
     f: f,
     oct: oct,
     f0: f0,
+    n: n,
     label: label,
   }
 }
@@ -98,7 +108,7 @@ app.cell = function(x,y) {
 app.press = function(x,y) {
   var cell = app.cells[x][y]
   var f = cell.f0;
-  app.playNote(app.data.tune * Math.pow(2.0, -9/12) * f, 500)
+  app.playNote(app.data.tune * Math.pow(2.0, -9/12) * f, cell.n / 12)
   cell.elt.addClass('playing')
   app.playing.push(cell)
   if (app.debug) {
@@ -119,17 +129,42 @@ app.release = function(x,y) {
   }
 }
 
-app.playNote = function(frequency, duration) {
+app.playNote = function(frequency, param) {
   // Thanks https://stackoverflow.com/questions/39200994/play-specific-frequency-with-javascript
   // create Oscillator node
+  // param in [0,1], controls raised-cosine Shepard fade
   var oscillator = app.audioCtx.createOscillator();
-
-  oscillator.type = 'sawtooth';
-  oscillator.frequency.value = frequency; // value in hertz
-  oscillator.connect(app.audioCtx.destination);
-  oscillator.start();
-
   app.oscillators.push(oscillator)
+  var gainNode = app.audioCtx.createGain();
+  oscillator.connect(gainNode)
+  gainNode.connect(app.audioCtx.destination);
+
+  oscillator.type = app.data.osc_type;
+  oscillator.frequency.value = frequency; // value in hertz
+
+  if (app.data.shepard) {
+    var oscillator2 = app.audioCtx.createOscillator();
+    app.oscillators.push(oscillator2)
+    var gainNode2 = app.audioCtx.createGain();
+    oscillator2.connect(gainNode2)
+    gainNode2.connect(app.audioCtx.destination);
+
+    oscillator2.type = app.data.osc_type;
+    oscillator2.frequency.value = frequency * 2; // value in hertz
+
+    // Shepard tones with raised-cosine
+    var v = 0.5 + Math.cos(Math.PI * (1 - param)) /  2
+    var v2 = 0.5 + Math.cos(Math.PI * param) /  2
+    gainNode.gain.value = app.data.master_volume * v
+    gainNode2.gain.value = app.data.master_volume * v2
+
+    oscillator.start();
+    oscillator2.start();
+  } else {
+    gainNode.gain.value = app.data.master_volume
+    
+    oscillator.start();
+  }
 }
 
 $(document).ready(app.ready);
