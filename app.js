@@ -45,6 +45,7 @@ app.ready = function () {
       if (app.debug) {
         console.log("hold off")
       }
+      app.release();
     }
   }
 
