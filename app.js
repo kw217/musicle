@@ -1,5 +1,6 @@
 // Musicle - application code
 // Copyright (c)2018 Keith Wansbrough
+// Open source; see https://github.com/kw217/musicle/LICENSE for details.
 
 var app = {};
 
