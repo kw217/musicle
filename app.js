@@ -88,7 +88,7 @@ app.cell = function(x,y) {
   var f0 = f / Math.pow(2.0, oct)
   var n = 12.0 * Math.log2(f0)
   var n0 = Math.round(n)
-  var c = Math.round((n - n0) * 50)
+  var c = Math.round((n - n0) * 100)
   if (n0 == 12) {
     n -= 12
     n0 -= 12
