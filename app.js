@@ -30,6 +30,7 @@ app.data = {
 app.ready = function () {
   // Set up window event handlers
   window.onmouseup = app.release;
+  window.ontouchend = app.release;
   window.onkeydown = function(e) {
     if (e.which == 17) {
       e.preventDefault();
