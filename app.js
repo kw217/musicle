@@ -71,7 +71,14 @@ app.ready = function () {
       var cell = app.cell(x,y)
       cell.elt = $("<td class='" + klass + "'>" + cell.label  + "</td>");
       row.append(cell.elt)
-      cell.elt.mousedown(function(x,y) { return function() { app.press(x,y) } }(x,y))  // I hate JS
+      var handler = function(x,y) {
+      	return function(e) { 
+      		e.preventDefault();
+      		app.press(x,y)
+      	}
+  	  }(x,y)  // I hate JS
+      cell.elt.mousedown(handler);
+      cell.elt.on("touchstart", handler);
       if (!(x in app.cells)) {
         app.cells[x] = []
       }
