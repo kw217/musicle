@@ -17,3 +17,12 @@
 .playing.playing.playing {
 	background-color: #ff3333;
 }
+
+.dynamic-pitch-highlight {
+    background-color: #eeeeff;
+}
+
+/* must be after .dynamic-pitch-highlight */
+.dynamic-name-highlight {
+    background-color: #eeffee;
+}

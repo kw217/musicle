@@ -17,7 +17,7 @@ app.cells = [];
 app.hold = false;
 
 // Are we currently debugging? (controls console logging)
-app.debug = true;
+app.debug = false;
 
 app.data = {
   // size of grid
@@ -53,6 +53,21 @@ app.data = {
 
 // App initialization
 app.ready = function () {
+  // Find stylesheet
+  for (var i=0; i<document.styleSheets.length; i++) {
+    var sheet = document.styleSheets[i];
+    if (sheet.title == "app") {
+      for (var j = 0; j < sheet.cssRules.length; j++) {
+        var rule = sheet.cssRules[j]
+        if (rule.selectorText == ".dynamic-name-highlight") {
+          app.cssnamerule = rule
+        } else if (rule.selectorText == ".dynamic-pitch-highlight") {
+          app.csspitchrule = rule
+        }
+      }
+    }
+  }
+
   // Set up window event handlers
   window.onmouseup = app.release;
   window.ontouchend = app.release;
@@ -95,6 +110,7 @@ app.ready = function () {
         klass += " centre"
       }
       var cell = app.cell(x,y)
+      klass += " " + cell.name + " pitch-" + cell.n0
       cell.elt = $("<td class='" + klass + "'>" + cell.label  + "</td>");
       row.append(cell.elt)
       var handler = function(x,y) {
@@ -159,6 +175,7 @@ app.cell = function(x,y) {
     f0: f0,
     n: n,
     n0: n0,
+    name: name,
     label: label,
     // elt: corresponding DOM element (filled in later)
   }
@@ -170,6 +187,8 @@ app.press = function(x,y) {
   var f = cell.f0;
   app.playNote(app.data.tune * Math.pow(2.0, -9/12) * f, cell.n / 12)
   cell.elt.addClass('playing')
+  app.cssnamerule.selectorText = "." + cell.name
+  app.csspitchrule.selectorText = ".pitch-" + cell.n0
   app.playing.push(cell)
   if (app.debug) {
     console.log(x, y)
@@ -184,7 +203,10 @@ app.release = function(x,y) {
     }
     app.oscillators = []
     for (var p in app.playing) {
-      app.playing[p].elt.removeClass('playing')
+      var cell = app.playing[p]
+      cell.elt.removeClass('playing')
+      app.cssnamerule.selectorText = ".dummy"
+      app.csspitchrule.selectorText = ".dummy"
     }
     app.playing = []
   }
