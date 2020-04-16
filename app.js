@@ -27,10 +27,10 @@ app.data = {
   x_max: 12,
 
   // size of "focussed" portion of grid (shown highlighted)
-  yf_min: -3,
-  yf_max: 3,
-  xf_min: -12,
-  xf_max: 12,
+  yf_min: -2,
+  yf_max: 2,
+  xf_min: -7,
+  xf_max: 7,
 
   // tuning (frequency of A above middle C)
   tune: 440,
@@ -44,8 +44,11 @@ app.data = {
   // volume
   master_volume: 0.5,
 
-  // note names (by semitone from C)
-  names: ["C", "C&#x266F;", "D", "D&#x266F;", "E", "F", "F&#x266F;", "G", "G&#x266F;", "A", "A&#x266F;", "B",],
+  // scale note pitch (in semitones, from C)
+  scalepitch: [0, 2, 4, 5, 7, 9, 11],
+
+  // scale note name by scale point from C
+  scalename: ["C", "D", "E", "F", "G", "A", "B"]
 };
 
 // App initialization
@@ -115,11 +118,17 @@ app.ready = function () {
 
 // Create new cell for (x,y).
 app.cell = function(x,y) {
+  // computed frequency
   var f = Math.pow(3.0, x) * Math.pow(5.0, y)
+  // octave in which f falls
   var oct = Math.floor(Math.log2(f))
+  // normalised frequency (forced to be in octave 0)
   var f0 = f / Math.pow(2.0, oct)
+  // fractional semitone within octave [0,12)
   var n = 12.0 * Math.log2(f0)
+  // rounded semitone 0..11 (C..B)
   var n0 = Math.round(n)
+  // how far n is above n0 in cents (rounded to integer) -50..49
   var c = Math.round((n - n0) * 100)
   if (n0 == 12) {
     n -= 12
@@ -127,18 +136,29 @@ app.cell = function(x,y) {
     f0 /= 2.0
     oct += 1
   }
-  var name = app.data.names[n0 % 12]
+  // scale note 0..6 (C..B) - based on musical theory (5th/3rd per step)
+  var scalepoint = ((4 * x + 2 * y) % 7 + 7) % 7
+  // semitone offset from scalename (..., -1 = flat, 0 = natural, 1 = sharp, ...)
+  var offset = ((n0 - app.data.scalepitch[scalepoint] + 12) % 12 + 5) % 12 - 5  // prefer ###### over bbbbbb
+  // name for note (e.g., C-sharp)
+  var name = app.data.scalename[scalepoint]
+  if (offset == -2) {
+    name += "\u{1D12B}"
+  } else if (offset == 2) {
+    name += "\u{1D12A}"
+  } else if (offset < 0) {
+    name += "\u266D".repeat(-offset)
+  } else if (offset > 0) {
+    name += "\u266F".repeat(offset)
+  }
+  // cell label
   var label = name + (c >= 0 ? "+" : "") + c
   return {
-    // computed frequency
     f: f,
-    // octave in which f falls
     oct: oct,
-    // normalised frequency (forced to be in octave 0)
     f0: f0,
-    // fractional semitone within octave
     n: n,
-    // cell label
+    n0: n0,
     label: label,
     // elt: corresponding DOM element (filled in later)
   }
