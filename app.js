@@ -21,8 +21,8 @@ app.debug = false;
 
 app.data = {
   // size of grid
-  y_min: -12,
-  y_max: 12,
+  y_min: -7,
+  y_max: 7,
   x_min: -12,
   x_max: 12,
 
@@ -40,6 +40,9 @@ app.data = {
 
   // use shepard tones?
   shepard: true,
+
+  // use even temper?
+  even_tempered: false,
 
   // volume
   master_volume: 0.5,
@@ -63,6 +66,10 @@ app.ready = function () {
           app.cssnamerule = rule
         } else if (rule.selectorText == ".dynamic-pitch-highlight") {
           app.csspitchrule = rule
+        } else if (rule.selectorText == ".cent-on") {
+          app.csscentonrule = rule
+        } else if (rule.selectorText == ".cent-off") {
+          app.csscentoffrule = rule
         }
       }
     }
@@ -98,6 +105,16 @@ app.ready = function () {
   var shepard = $("#shepard");
   shepard.prop('checked', app.data.shepard);
   shepard.change(function() { app.data.shepard = shepard.prop('checked') });
+  var even_tempered = $("#even_tempered")
+  app.csscentonrule.selectorText = app.data.even_tempered ? ".dummy" : ".cent"
+  app.csscentoffrule.selectorText = app.data.even_tempered ? ".cent" : ".dummy"
+  even_tempered.prop('checked', app.data.even_tempered)
+  even_tempered.change(function() {
+    const value = even_tempered.prop('checked')
+    app.csscentonrule.selectorText = value ? ".dummy" : ".cent"
+    app.csscentoffrule.selectorText = value ? ".cent" : ".dummy"
+    app.data.even_tempered = value
+  })
 
   // Set up table
   var table = $("#musicle");
@@ -110,7 +127,7 @@ app.ready = function () {
         klass += " centre"
       }
       var cell = app.cell(x,y)
-      klass += " " + cell.name + " pitch-" + cell.n0
+      klass += ` note-${cell.name} pitch-${cell.n0}`
       cell.elt = $("<td class='" + klass + "'>" + cell.label  + "</td>");
       row.append(cell.elt)
       var handler = function(x,y) {
@@ -144,18 +161,30 @@ app.cell = function(x,y) {
   var n = 12.0 * Math.log2(f0)
   // rounded semitone 0..11 (C..B)
   var n0 = Math.round(n)
-  // how far n is above n0 in cents (rounded to integer) -50..49
-  var c = Math.round((n - n0) * 100)
   if (n0 == 12) {
     n -= 12
     n0 -= 12
     f0 /= 2.0
     oct += 1
   }
+  // how far n is above n0 in cents (rounded to integer) -50..49
+  var c = (Math.round((n - n0) * 100) + 1200 + 600) % 1200 - 600
   // scale note 0..6 (C..B) - based on musical theory (5th/3rd per step)
   var scalepoint = ((4 * x + 2 * y) % 7 + 7) % 7
+  // scale pitch in semitones - based on musical theory (5th/3rd per step)
+  var nt = 7 * x + 4 * y
+  // scale pitch within the octave 0..11 (C..B)
+  var nt0 = (nt % 12 + 12) % 12
+  // how far n is above nt0 in cents (rounded to integer)
+  var ct = (Math.round((n - nt0) * 100) + 1200 + 600) % 1200 - 600
+  // even-tempered frequency (12-EDO)
+  var ft = Math.pow(2.0, nt / 12)
+  // octave in which ft falls
+  var octt = Math.floor(Math.log2(ft))
+  // normalised even-tempered frequency (forced to be in octave 0)
+  var ft0 = ft / Math.pow(2.0, octt)
   // semitone offset from scalename (..., -1 = flat, 0 = natural, 1 = sharp, ...)
-  var offset = ((n0 - app.data.scalepitch[scalepoint] + 12) % 12 + 5) % 12 - 5  // prefer ###### over bbbbbb
+  var offset = ((nt0 - app.data.scalepitch[scalepoint] + 12) % 12 + 12 + 5) % 12 - 5  // prefer ###### over bbbbbb
   // name for note (e.g., C-sharp)
   var name = app.data.scalename[scalepoint]
   if (offset == -2) {
@@ -168,13 +197,15 @@ app.cell = function(x,y) {
     name += "\u266F".repeat(offset)
   }
   // cell label
-  var label = name + (c >= 0 ? "+" : "") + c
+  var label = `${name}<span class="cent">${ct >= 0 ? "+" : ""}${ct}</span>`
   return {
     f: f,
-    oct: oct,
+    ft: ft,
     f0: f0,
+    ft0: ft0,
     n: n,
     n0: n0,
+    nt0: nt0,
     name: name,
     label: label,
     // elt: corresponding DOM element (filled in later)
@@ -184,11 +215,10 @@ app.cell = function(x,y) {
 // Press cell(x,y) - play tone and highlight etc.
 app.press = function(x,y) {
   var cell = app.cells[x][y]
-  var f = cell.f0;
-  app.playNote(app.data.tune * Math.pow(2.0, -9/12) * f, cell.n / 12)
+  app.playNote(app.data.tune * Math.pow(2.0, -9/12) * (app.data.even_tempered ? cell.ft0 : cell.f0), cell.n / 12)
   cell.elt.addClass('playing')
-  app.cssnamerule.selectorText = "." + cell.name
-  app.csspitchrule.selectorText = ".pitch-" + cell.n0
+  app.cssnamerule.selectorText = `.note-${cell.name}`
+  app.csspitchrule.selectorText = `.pitch-${cell.n0}`
   app.playing.push(cell)
   if (app.debug) {
     console.log(x, y)

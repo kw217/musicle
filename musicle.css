@@ -2,6 +2,20 @@
   border: 1px solid black;
 }
 
+.cent {
+    font-size: 84%;
+    font-style: italic;
+    color: #777;
+}
+
+.cent-on {
+    visibility: visible;
+}
+
+.cent-off {
+    visibility: hidden;
+}
+
 .x0, .y0, .x0.centre, .y0.centre {
 	background-color: #ffffcc;
 }
@@ -19,10 +33,10 @@
 }
 
 .dynamic-pitch-highlight {
-    background-color: #eeeeff;
+    background-color: #ddddff;
 }
 
 /* must be after .dynamic-pitch-highlight */
 .dynamic-name-highlight {
-    background-color: #eeffee;
+    background-color: #ddffdd;
 }
