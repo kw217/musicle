@@ -127,7 +127,7 @@ app.ready = function () {
         klass += " centre"
       }
       var cell = app.cell(x,y)
-      klass += ` note-${cell.name} pitch-${cell.n0}`
+      klass += ` note-${cell.name} pitch-${cell.n0} tpitch-${cell.nt0}`
       cell.elt = $("<td class='" + klass + "'>" + cell.label  + "</td>");
       row.append(cell.elt)
       var handler = function(x,y) {
@@ -218,7 +218,7 @@ app.press = function(x,y) {
   app.playNote(app.data.tune * Math.pow(2.0, -9/12) * (app.data.even_tempered ? cell.ft0 : cell.f0), cell.n / 12)
   cell.elt.addClass('playing')
   app.cssnamerule.selectorText = `.note-${cell.name}`
-  app.csspitchrule.selectorText = `.pitch-${cell.n0}`
+  app.csspitchrule.selectorText = `.${app.data.even_tempered ? "tpitch" : "pitch"}-${cell.n0}`
   app.playing.push(cell)
   if (app.debug) {
     console.log(x, y)
