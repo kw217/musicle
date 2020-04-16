@@ -4,35 +4,57 @@
 
 var app = {};
 
+// Currently playing oscillators.
 app.oscillators = [];
+
+// Currently playing cells (notes).
 app.playing = [];
+
+// All cells in grid (by [x][y])
 app.cells = [];
+
+// Are we currently holding?
 app.hold = false;
 
+// Are we currently debugging? (controls console logging)
 app.debug = true;
 
 app.data = {
+  // size of grid
   y_min: -12,
   y_max: 12,
   x_min: -12,
   x_max: 12,
+
+  // size of "focussed" portion of grid (shown highlighted)
   yf_min: -3,
   yf_max: 3,
   xf_min: -12,
   xf_max: 12,
+
+  // tuning (frequency of A above middle C)
   tune: 440,
+
+  // current waveform
   osc_type: 'triangle',
+
+  // use shepard tones?
   shepard: true,
+
+  // volume
   master_volume: 0.5,
+
+  // note names (by semitone from C)
   names: ["C", "C&#x266F;", "D", "D&#x266F;", "E", "F", "F&#x266F;", "G", "G&#x266F;", "A", "A&#x266F;", "B",],
 };
 
+// App initialization
 app.ready = function () {
   // Set up window event handlers
   window.onmouseup = app.release;
   window.ontouchend = app.release;
   window.onkeydown = function(e) {
-    if (e.which == 17) {
+    if (e.which == 17) {  // CTRL
       e.preventDefault();
       app.hold = true;
       if (app.debug) {
@@ -41,7 +63,7 @@ app.ready = function () {
     }
   }
   window.onkeyup = function(e) {
-    if (e.which == 17) {
+    if (e.which == 17) {  // CTRL
       e.preventDefault();
       app.hold = false;
       if (app.debug) {
@@ -73,7 +95,7 @@ app.ready = function () {
       cell.elt = $("<td class='" + klass + "'>" + cell.label  + "</td>");
       row.append(cell.elt)
       var handler = function(x,y) {
-      	return function(e) { 
+      	return function(e) {
       		e.preventDefault();
       		app.press(x,y)
       	}
@@ -91,6 +113,7 @@ app.ready = function () {
   app.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 };
 
+// Create new cell for (x,y).
 app.cell = function(x,y) {
   var f = Math.pow(3.0, x) * Math.pow(5.0, y)
   var oct = Math.floor(Math.log2(f))
@@ -107,14 +130,21 @@ app.cell = function(x,y) {
   var name = app.data.names[n0 % 12]
   var label = name + (c >= 0 ? "+" : "") + c
   return {
+    // computed frequency
     f: f,
+    // octave in which f falls
     oct: oct,
+    // normalised frequency (forced to be in octave 0)
     f0: f0,
+    // fractional semitone within octave
     n: n,
+    // cell label
     label: label,
+    // elt: corresponding DOM element (filled in later)
   }
 }
 
+// Press cell(x,y) - play tone and highlight etc.
 app.press = function(x,y) {
   var cell = app.cells[x][y]
   var f = cell.f0;
@@ -126,6 +156,7 @@ app.press = function(x,y) {
   }
 }
 
+// Release cell(x,y) - stop playing tone and unhighlight etc.
 app.release = function(x,y) {
   if (!app.hold) {
     for (var o in app.oscillators) {
@@ -139,6 +170,7 @@ app.release = function(x,y) {
   }
 }
 
+// Play note of specified frequency, with Shepard if required (using param in [0,1] for fade)
 app.playNote = function(frequency, param) {
   // Thanks https://stackoverflow.com/questions/39200994/play-specific-frequency-with-javascript
   // create Oscillator node
@@ -172,7 +204,7 @@ app.playNote = function(frequency, param) {
     oscillator2.start();
   } else {
     gainNode.gain.value = app.data.master_volume
-    
+
     oscillator.start();
   }
 }
