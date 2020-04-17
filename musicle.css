@@ -16,27 +16,28 @@
     visibility: hidden;
 }
 
-.x0, .y0, .x0.centre, .y0.centre {
-	background-color: #ffffcc;
-}
+/* order of these rules is signficant - later has precedence */
 
-.centre {
+.focus {
 	background-color: #dddddd;
 }
 
-.x0.y0 {
-	background-color: #ffee77;
+.x0, .y0 {
+    background-color: #ffffcc;
 }
 
-.playing.playing.playing {
-	background-color: #ff3333;
+.x0y0 {
+	background-color: #ffee77;
 }
 
 .dynamic-pitch-highlight {
     background-color: #ddddff;
 }
 
-/* must be after .dynamic-pitch-highlight */
 .dynamic-name-highlight {
     background-color: #ddffdd;
+}
+
+.playing {
+    background-color: #ff3333;
 }

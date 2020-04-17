@@ -123,8 +123,11 @@ app.ready = function () {
     table.append(row);
     for (var x = app.data.x_min; x <= app.data.x_max; x++) {
       var klass = ((x == 0) ? "x0" : "") + " " + ((y == 0) ? "y0" : "")
+      if (x == 0 && y == 0) {
+        klass += " x0y0"
+      }
       if (x >= app.data.xf_min && x <= app.data.xf_max && y >= app.data.yf_min && y <= app.data.yf_max) {
-        klass += " centre"
+        klass += " focus"
       }
       var cell = app.cell(x,y)
       klass += ` note-${cell.name} pitch-${cell.n0} tpitch-${cell.nt0}`
